@@ -11,5 +11,9 @@
   "license": "ISC",
   "devDependencies": {
     "nodemon": "^3.0.1"
+  },
+  "dependencies": {
+    "socket.io": "^4.7.1",
+    "uuid": "^9.0.0"
   }
 }
