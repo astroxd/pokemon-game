@@ -12,7 +12,7 @@ const Lobby = () => {
 
   const getPlayers = useCallback(() => {
     socket.emit("get-players", room);
-  }, [location.search]);
+  }, [room]);
 
   useEffect(() => {
     socket.on("send-players", (players) => {

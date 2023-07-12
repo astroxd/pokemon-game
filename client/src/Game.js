@@ -15,16 +15,50 @@ const Game = ({ room }) => {
     socket.emit("start-game", room);
   };
 
+  const getGameInfo = () => {
+    console.log("get game info");
+    socket.emit("get-game-info", room);
+  };
+
+  const checkAnswer = (e) => {
+    e.preventDefault();
+    socket.emit("get-guess", room, socket.id, guess);
+  };
+
   useEffect(() => {
     socket.on("send-status", (status) => {
       setStatus(status);
     });
+    socket.on("send-game-info", (gameInfo) => {
+      setGameInfo(gameInfo);
+      setGuess("");
+    });
     getGameStatus();
+
+    if (status === 1) {
+      getGameInfo();
+    }
 
     return () => {
       socket.off("send-status");
+      socket.off("send-game-info");
     };
   }, [getGameStatus]);
+
+  const [gameInfo, setGameInfo] = useState();
+  const [guess, setGuess] = useState("");
+
+  const [timer, setTimer] = useState();
+
+  useEffect(() => {
+    socket.on("send-timer", (_timer) => {
+      setTimer(_timer);
+      console.log(_timer);
+    });
+    return () => {
+      socket.off("send-timer");
+    };
+  }, []);
 
   return (
     <div>
@@ -32,7 +66,25 @@ const Game = ({ room }) => {
       {status === 0 ? (
         <button onClick={startGame}>Start Game</button>
       ) : (
-        <div>game</div>
+        <div>
+          {gameInfo?.src && <img src={gameInfo.src} alt="cacca" width={200} />}
+          <form onSubmit={(e) => checkAnswer(e)}>
+            <input
+              type="text"
+              placeholder="answer"
+              value={guess}
+              onChange={(e) => setGuess(e.target.value)}
+            />
+          </form>
+          Points:{" "}
+          {gameInfo?.points?.map(({ id, points }) => (
+            <div>
+              <span>{id} </span>
+              <span>{points}</span>
+            </div>
+          ))}
+          Timer: {timer}
+        </div>
       )}
     </div>
   );
