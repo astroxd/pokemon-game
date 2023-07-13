@@ -7,7 +7,9 @@ class Lobby {
 
   src = "";
   answer = "";
-  timer = 5;
+  timer = 400;
+
+  skipping = 0;
 
   constructor(code, name = "Lobby") {
     this.code = code;

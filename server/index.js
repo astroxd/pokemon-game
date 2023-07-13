@@ -53,14 +53,29 @@ io.on("connection", (socket) => {
   });
 
   socket.on("join", (room) => {
-    // TODO check if lobby is empty
-    socket.join(room);
-
     const lobby = getLobbyByCode(room);
+    if (!lobby.users.find((user) => user.id === socket.id)) {
+      // TODO check if lobby is empty
+      socket.join(room);
 
-    lobby.addUser(new User(socket.id, "Utente"));
+      lobby.addUser(new User(socket.id, "Utente"));
+    }
 
     io.to(room).emit("receive", room);
+  });
+
+  socket.on("leave", (room) => {
+    console.log("leaving");
+    socket.leave(room);
+
+    const clients = io.sockets.adapter.rooms.get(room);
+    console.log("clients", clients);
+
+    if (clients === undefined) {
+      const idx = lobbys.findIndex((lobby) => lobby.code === room);
+      delete lobbys[idx];
+      lobbys.splice(idx, 1);
+    }
   });
 
   socket.on("get-status", (room) => {
@@ -97,23 +112,38 @@ io.on("connection", (socket) => {
     }
   });
 
-  const startTimer = (room) => {
+  socket.on("get-skip", async (room) => {
     const lobby = getLobbyByCode(room);
-    let interval = setInterval(() => {
-      lobby.decreaseTimer();
-      io.to(room).emit("send-timer", lobby.timer);
-      if (lobby.timer === "gioco finito") {
-        lobby.hasGameEnded = true;
-        lobby.isPlaying = false;
-        sendGameInfo(lobby);
-        io.to(room).emit("send-status", lobby.isPlaying);
-        checkWinner(lobby);
-        clearInterval(interval);
-      }
-    }, 1000);
-  };
+
+    lobby.skipping += 1;
+
+    io.to(room).emit("send-skippers", lobby.skipping, lobby.users.length);
+
+    if (lobby.skipping >= Math.ceil(lobby.users.length / 2)) {
+      await getPokemon(lobby);
+      lobby.skipping = 0;
+      sendGameInfo(lobby);
+      io.to(room).emit("send-skip");
+      io.to(room).emit("send-skippers", lobby.skipping, lobby.users.length);
+    }
+  });
 });
 
+const startTimer = (room) => {
+  const lobby = getLobbyByCode(room);
+  let interval = setInterval(() => {
+    lobby.decreaseTimer();
+    io.to(room).emit("send-timer", lobby.timer);
+    if (lobby.timer === "gioco finito") {
+      lobby.hasGameEnded = true;
+      lobby.isPlaying = false;
+      sendGameInfo(lobby);
+      io.to(room).emit("send-status", lobby.isPlaying);
+      checkWinner(lobby);
+      clearInterval(interval);
+    }
+  }, 1000);
+};
 const getLobbyByCode = (code) => {
   const lobby = lobbys.find((lobby) => {
     return lobby.code === code;
@@ -123,6 +153,7 @@ const getLobbyByCode = (code) => {
 
 const sendGameInfo = (lobby) => {
   io.to(lobby.code).emit("send-game-info", {
+    isPlaying: lobby.isPlaying,
     src: lobby.src,
     points: lobby.users,
     hasGameEnded: lobby.hasGameEnded,

@@ -23,6 +23,14 @@ const Lobby = () => {
     };
   }, []);
 
+  //! Works without strict mode
+  // useEffect(() => {
+  //   return () => {
+  //     console.log("leaving");
+  //     socket.emit("leave", room);
+  //   };
+  // }, [location.search]);
+
   return (
     <div>
       <button onClick={getPlayers}>Cacca</button>
@@ -35,7 +43,7 @@ const Lobby = () => {
         );
       })}
       <button onClick={() => getId()}>get ID</button>
-      <Game room={room} />
+      <Game room={room} players={players} />
     </div>
   );
 };

@@ -1,14 +1,13 @@
 import { useCallback, useEffect, useState } from "react";
 import { socket } from "./socket";
 
-const Game = ({ room }) => {
-  // 0 = pause
-  // 1 = playing
-  const [isPlaying, setIsPlaying] = useState(false);
+const Game = ({ room, players }) => {
+  const [gameInfo, setGameInfo] = useState();
+  const [guess, setGuess] = useState("");
+  const [timer, setTimer] = useState();
 
-  const getGameStatus = useCallback(() => {
-    socket.emit("get-status", room);
-  }, [room]);
+  const [skip, setSkip] = useState(false);
+  const [skippers, setSkippers] = useState([0, gameInfo?.points?.length ?? 0]);
 
   const startGame = () => {
     console.log("stargame");
@@ -25,17 +24,10 @@ const Game = ({ room }) => {
     socket.emit("get-guess", room, socket.id, guess);
   };
 
-  useEffect(() => {
-    socket.on("send-status", (status) => {
-      console.log(status);
-      setIsPlaying(status);
-    });
-    getGameStatus();
-
-    return () => {
-      socket.off("send-status");
-    };
-  }, [getGameStatus]);
+  const voteSkip = () => {
+    setSkip(true);
+    socket.emit("get-skip", room);
+  };
 
   useEffect(() => {
     socket.on("send-game-info", (gameInfo) => {
@@ -44,35 +36,39 @@ const Game = ({ room }) => {
       setGuess("");
     });
 
-    if (isPlaying) {
-      getGameInfo();
-    }
+    getGameInfo();
     return () => {
       socket.off("send-game-info");
     };
-  }, [isPlaying, getGameInfo]);
-
-  const [gameInfo, setGameInfo] = useState();
-  const [guess, setGuess] = useState("");
-
-  const [timer, setTimer] = useState();
+  }, [getGameInfo]);
 
   useEffect(() => {
     socket.on("send-timer", (_timer) => {
       setTimer(_timer);
       console.log(_timer);
     });
+
+    socket.on("send-skip", () => {
+      setSkip(false);
+    });
+
+    socket.on("send-skippers", (skippers, users) => {
+      setSkippers([skippers, users]);
+    });
+
     return () => {
       socket.off("send-timer");
+      socket.off("send-skip");
+      socket.off("send-skippers");
     };
   }, []);
 
   return (
     <div>
-      {isPlaying ? "true" : "false"}
+      {gameInfo?.isPlaying ? "true" : "false"}
       {gameInfo?.hasGameEnded ? (
         <div>GAME ENDED</div>
-      ) : !isPlaying ? (
+      ) : !gameInfo?.isPlaying ? (
         <button onClick={startGame}>Start Game</button>
       ) : (
         <div>
@@ -93,6 +89,13 @@ const Game = ({ room }) => {
             </div>
           ))}
           Timer: {timer}
+          {skip ? (
+            `Skipping ${skippers[0]} \\ ${skippers[1]}`
+          ) : (
+            <button
+              onClick={voteSkip}
+            >{`Skip ${skippers[0]} \\ ${players.length}`}</button>
+          )}
         </div>
       )}
     </div>
