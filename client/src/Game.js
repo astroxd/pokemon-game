@@ -4,7 +4,7 @@ import { socket } from "./socket";
 const Game = ({ room }) => {
   // 0 = pause
   // 1 = playing
-  const [status, setStatus] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
 
   const getGameStatus = useCallback(() => {
     socket.emit("get-status", room);
@@ -27,7 +27,8 @@ const Game = ({ room }) => {
 
   useEffect(() => {
     socket.on("send-status", (status) => {
-      setStatus(status);
+      console.log(status);
+      setIsPlaying(status);
     });
     socket.on("send-game-info", (gameInfo) => {
       setGameInfo(gameInfo);
@@ -35,7 +36,7 @@ const Game = ({ room }) => {
     });
     getGameStatus();
 
-    if (status === 1) {
+    if (isPlaying) {
       getGameInfo();
     }
 
@@ -43,7 +44,7 @@ const Game = ({ room }) => {
       socket.off("send-status");
       socket.off("send-game-info");
     };
-  }, [getGameStatus]);
+  }, [getGameStatus, isPlaying]);
 
   const [gameInfo, setGameInfo] = useState();
   const [guess, setGuess] = useState("");
@@ -62,8 +63,8 @@ const Game = ({ room }) => {
 
   return (
     <div>
-      {status}
-      {status === 0 ? (
+      {isPlaying ? "true" : "false"}
+      {!isPlaying ? (
         <button onClick={startGame}>Start Game</button>
       ) : (
         <div>
@@ -83,7 +84,7 @@ const Game = ({ room }) => {
               <span>{points}</span>
             </div>
           ))}
-          Timer: {timer}
+          {/* Timer: {timer} */}
         </div>
       )}
     </div>
