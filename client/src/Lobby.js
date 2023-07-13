@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { getId, socket } from "./socket";
 import { useLocation } from "react-router-dom";
 import Game from "./Game";
@@ -8,9 +8,9 @@ const Lobby = () => {
   const room = location.search.slice(7, 15);
 
   const [players, setPlayers] = useState([]);
-  console.log(location.search.slice(7, 15));
 
-  const getPlayers = useCallback(() => {
+  const getPlayers = useMemo(() => {
+    console.log("get players", room);
     socket.emit("get-players", room);
   }, [room]);
 
@@ -18,11 +18,10 @@ const Lobby = () => {
     socket.on("send-players", (players) => {
       setPlayers(players);
     });
-    getPlayers();
     return () => {
       socket.off("send-players");
     };
-  }, [getPlayers]);
+  }, []);
 
   return (
     <div>

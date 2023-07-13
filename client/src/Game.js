@@ -15,10 +15,10 @@ const Game = ({ room }) => {
     socket.emit("start-game", room);
   };
 
-  const getGameInfo = () => {
+  const getGameInfo = useCallback(() => {
     console.log("get game info");
     socket.emit("get-game-info", room);
-  };
+  }, [room]);
 
   const checkAnswer = (e) => {
     e.preventDefault();
@@ -30,21 +30,27 @@ const Game = ({ room }) => {
       console.log(status);
       setIsPlaying(status);
     });
+    getGameStatus();
+
+    return () => {
+      socket.off("send-status");
+    };
+  }, [getGameStatus]);
+
+  useEffect(() => {
     socket.on("send-game-info", (gameInfo) => {
+      console.log(gameInfo);
       setGameInfo(gameInfo);
       setGuess("");
     });
-    getGameStatus();
 
     if (isPlaying) {
       getGameInfo();
     }
-
     return () => {
-      socket.off("send-status");
       socket.off("send-game-info");
     };
-  }, [getGameStatus, isPlaying]);
+  }, [isPlaying, getGameInfo]);
 
   const [gameInfo, setGameInfo] = useState();
   const [guess, setGuess] = useState("");
@@ -64,7 +70,9 @@ const Game = ({ room }) => {
   return (
     <div>
       {isPlaying ? "true" : "false"}
-      {!isPlaying ? (
+      {gameInfo?.hasGameEnded ? (
+        <div>GAME ENDED</div>
+      ) : !isPlaying ? (
         <button onClick={startGame}>Start Game</button>
       ) : (
         <div>
@@ -84,7 +92,7 @@ const Game = ({ room }) => {
               <span>{points}</span>
             </div>
           ))}
-          {/* Timer: {timer} */}
+          Timer: {timer}
         </div>
       )}
     </div>

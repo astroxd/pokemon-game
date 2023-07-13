@@ -10,15 +10,7 @@ const io = require("socket.io")(8080, {
 
 let lobbys = [];
 
-let users = [];
 let status = 0;
-
-let gameInfo = {
-  src: "",
-  points: [],
-};
-let timer = 30;
-let answer = "";
 
 const getPokemon = async (lobby) => {
   lobby.answer = "";
@@ -49,16 +41,6 @@ io.on("connection", (socket) => {
     lobby.addUser(new User(socket.id, "Utente"));
 
     lobbys.push(lobby);
-
-    // users.push({
-    //   room: lobbyId,
-    //   users: [
-    //     {
-    //       id: socket.id,
-    //       name: "nome",
-    //     },
-    //   ],
-    // });
   });
 
   socket.on("get-players", (roomID) => {
@@ -66,10 +48,7 @@ io.on("connection", (socket) => {
 
     const players = lobby.users;
 
-    // const players = users.find(({ room }) => {
-    //   return room == roomID;
-    // })?.users;
-    console.log(players);
+    console.log("get-players", players);
     io.to(roomID).emit("send-players", players);
   });
 
@@ -82,15 +61,6 @@ io.on("connection", (socket) => {
     lobby.addUser(new User(socket.id, "Utente"));
 
     io.to(room).emit("receive", room);
-
-    // const index = users.findIndex(({ room }) => room === room);
-    // users[index].users = [
-    //   ...users[index].users,
-    //   {
-    //     id: socket.id,
-    //     name: "nome",
-    //   },
-    // ];
   });
 
   socket.on("get-status", (room) => {
@@ -105,27 +75,15 @@ io.on("connection", (socket) => {
     startTimer(_room);
     await getPokemon(lobby);
 
-    // const players = users.find(({ room }) => {
-    //   return room == _room;
-    // })?.users;
-    // let gamerPoints = [];
-    // players.forEach(({ id }) => gamerPoints.push({ id, points: 0 }));
-    // gameInfo.points = gamerPoints;
-
-    // setInterval(() => decreaseTimer(_room), 1000);
-
     io.to(_room).emit("send-status", lobby.isPlaying);
-    io.to(_room).emit("send-game-info", {
-      src: lobby.src,
-      points: lobby.users,
-    });
+    sendGameInfo(lobby);
     io.to(_room).emit("send-timer", lobby.timer);
   });
 
   socket.on("get-game-info", (room) => {
     const lobby = getLobbyByCode(room);
-    if (status === 0) return;
-    io.to(room).emit("send-game-info", { src: lobby.src });
+    if (!lobby.isPlaying) return;
+    sendGameInfo(lobby);
   });
 
   socket.on("get-guess", async (room, _id, guess) => {
@@ -134,27 +92,25 @@ io.on("connection", (socket) => {
     if (guess.toLowerCase() === lobby.answer) {
       const user = lobby.users.find(({ id }) => id === _id);
       user.points += 1;
-      // const user = gameInfo.points.findIndex(({ id }) => id === _id);
-      // gameInfo.points[user].points = gameInfo.points[user].points + 1;
       await getPokemon(lobby);
-      io.to(room).emit("send-game-info", {
-        src: lobby.src,
-        points: lobby.users,
-      });
+      sendGameInfo(lobby);
     }
   });
 
-  // TODO fix timer
   const startTimer = (room) => {
     const lobby = getLobbyByCode(room);
-    console.log(lobby);
-    setInterval(lobby.decreaseTimer, 1000);
-    // console.log("timer", timer);
-    // if (timer === "gioco finito") return;
-    // if (timer > 0) timer -= 1;
-    // else timer = "gioco finito";
-
-    io.to(room).emit("send-timer", lobby.timer);
+    let interval = setInterval(() => {
+      lobby.decreaseTimer();
+      io.to(room).emit("send-timer", lobby.timer);
+      if (lobby.timer === "gioco finito") {
+        lobby.hasGameEnded = true;
+        lobby.isPlaying = false;
+        sendGameInfo(lobby);
+        io.to(room).emit("send-status", lobby.isPlaying);
+        checkWinner(lobby);
+        clearInterval(interval);
+      }
+    }, 1000);
   };
 });
 
@@ -163,4 +119,19 @@ const getLobbyByCode = (code) => {
     return lobby.code === code;
   });
   return lobby;
+};
+
+const sendGameInfo = (lobby) => {
+  io.to(lobby.code).emit("send-game-info", {
+    src: lobby.src,
+    points: lobby.users,
+    hasGameEnded: lobby.hasGameEnded,
+  });
+};
+
+const checkWinner = (lobby) => {
+  const players = lobby.users;
+  const max = players.reduce((a, b) => Math.max(a.points, b.points));
+  const winner = players.find((player) => player.points === max);
+  console.log(winner);
 };

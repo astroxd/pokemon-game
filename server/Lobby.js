@@ -3,20 +3,16 @@ class Lobby {
   users = [];
 
   isPlaying = false;
+  hasGameEnded = null;
+
   src = "";
   answer = "";
-  timer = 30;
-
-  interval;
+  timer = 5;
 
   constructor(code, name = "Lobby") {
     this.code = code;
     this.name = name;
   }
-
-  // get code() {
-  //   return this.code;
-  // }
 
   get users() {
     return this.users;
@@ -30,13 +26,6 @@ class Lobby {
     if (this.timer > 0) this.timer -= 1;
     else this.timer = "gioco finito";
   }
-
-  // getTimer() {
-
-  // for (var i; i < this.timer; i++) {
-  //   // yield this.timer - i;
-  // }
-  // }
 }
 
 module.exports = { Lobby };
