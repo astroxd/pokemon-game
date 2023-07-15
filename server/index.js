@@ -65,7 +65,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("leave", (room) => {
-    console.log("leaving");
+    console.log("leaving", room);
     socket.leave(room);
 
     const clients = io.sockets.adapter.rooms.get(room);

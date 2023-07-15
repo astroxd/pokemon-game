@@ -63,6 +63,10 @@ const Game = ({ room, players }) => {
     };
   }, []);
 
+  useEffect(() => {
+    setSkippers((skippers) => [skippers[0] ?? 0, players.length]);
+  }, [players]);
+
   return (
     <div>
       {gameInfo?.isPlaying ? "true" : "false"}
@@ -94,7 +98,7 @@ const Game = ({ room, players }) => {
           ) : (
             <button
               onClick={voteSkip}
-            >{`Skip ${skippers[0]} \\ ${players.length}`}</button>
+            >{`Skip ${skippers[0]} \\ ${skippers[1]}`}</button>
           )}
         </div>
       )}

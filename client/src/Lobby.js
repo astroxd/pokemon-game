@@ -1,11 +1,11 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { getId, socket } from "./socket";
 import { useLocation } from "react-router-dom";
 import Game from "./Game";
 
 const Lobby = () => {
   const location = useLocation();
-  const room = location.search.slice(7, 15);
+  let room = location.search.slice(7, 15);
 
   const [players, setPlayers] = useState([]);
 
@@ -18,6 +18,14 @@ const Lobby = () => {
     socket.on("send-players", (players) => {
       setPlayers(players);
     });
+
+    //* Connect when refreshing game page
+    if (!socket.id) {
+      console.log("getting id", location.search.slice(7, 15));
+      socket.connect();
+      socket.emit("join", location.search.slice(7, 15));
+    }
+
     return () => {
       socket.off("send-players");
     };
@@ -30,6 +38,19 @@ const Lobby = () => {
   //     socket.emit("leave", room);
   //   };
   // }, [location.search]);
+
+  useEffect(() => {
+    return () => {
+      console.log("leaving");
+      console.log(location.search.slice(7, 15));
+
+      if (location.search.slice(7, 15) !== room) {
+        console.log("socket");
+        socket.emit("leave", location.search.slice(7, 15));
+      }
+      room = null;
+    };
+  }, [location.search]);
 
   return (
     <div>
