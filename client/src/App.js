@@ -1,8 +1,11 @@
 import { socket, connect } from "./socket";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import UserContext from "./UserProvider";
 function App() {
   const navigate = useNavigate();
+
+  const { user, setUser } = useContext(UserContext);
 
   const createLobby = (e) => {
     e.preventDefault();
@@ -50,7 +53,9 @@ function App() {
         <input type="submit" />
       </form>
       <div>Connesso: {id}</div>
-      <div>{room}</div>
+      <div>Context: {user}</div>
+      <button onClick={() => setUser("pappa")}>Set User</button>
+      <button onClick={() => navigate("cacca")}>navigate</button>
     </div>
   );
 }

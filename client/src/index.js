@@ -5,25 +5,39 @@ import App from "./App";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import Lobby from "./Lobby";
 import GameDemo from "./GameDemo";
+import { UserProvider } from "./UserProvider";
+import PrivateRoute from "./PrivateRoute";
+import Login from "./Login";
 
 const router = createBrowserRouter([
   {
-    path: "/",
-    element: <App />,
-  },
-  {
-    path: "game",
-    element: <Lobby />,
-  },
-  {
     path: "demo",
     element: <GameDemo />,
+  },
+  {
+    path: "login",
+    element: <Login />,
+  },
+  {
+    element: <PrivateRoute />,
+    children: [
+      {
+        path: "/",
+        element: <App />,
+      },
+      {
+        path: "game",
+        element: <Lobby />,
+      },
+    ],
   },
 ]);
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   <React.StrictMode>
-    <RouterProvider router={router} />
+    <UserProvider>
+      <RouterProvider router={router} />
+    </UserProvider>
   </React.StrictMode>
 );

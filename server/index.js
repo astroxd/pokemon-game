@@ -24,6 +24,7 @@ const getPokemon = async (lobby) => {
     ({ language }) => language.name === "it"
   )?.name;
   console.log(italianName);
+
   const answer = italianName?.toLowerCase() ?? name.toLowerCase();
   lobby.answer = answer;
   lobby.src = `https://img.pokemondb.net/artwork/large/${name}.jpg`;
