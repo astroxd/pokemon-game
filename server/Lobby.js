@@ -11,6 +11,8 @@ class Lobby {
 
   skipping = 0;
 
+  messages = [];
+
   constructor(code, name = "Lobby") {
     this.code = code;
     this.name = name;
@@ -18,6 +20,10 @@ class Lobby {
 
   get users() {
     return this.users;
+  }
+
+  get messages() {
+    return this.messages;
   }
 
   addUser(user) {

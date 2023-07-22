@@ -8,23 +8,27 @@ import GameDemo from "./GameDemo";
 import { UserProvider } from "./UserProvider";
 import PrivateRoute from "./PrivateRoute";
 import Login from "./Login";
-
+import CanvasTest from "./CanvasTest";
 const router = createBrowserRouter([
   {
     path: "demo",
     element: <GameDemo />,
   },
   {
+    path: "canvas",
+    element: <CanvasTest />,
+  },
+  {
     path: "login",
     element: <Login />,
   },
   {
+    path: "/",
+    element: <App />,
+  },
+  {
     element: <PrivateRoute />,
     children: [
-      {
-        path: "/",
-        element: <App />,
-      },
       {
         path: "game",
         element: <Lobby />,

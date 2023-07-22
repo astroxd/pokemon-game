@@ -10,12 +10,10 @@ const io = require("socket.io")(8080, {
 
 let lobbys = [];
 
-let status = 0;
-
 const getPokemon = async (lobby) => {
   lobby.answer = "";
 
-  const randomId = Math.floor(Math.random() * 1000);
+  const randomId = Math.floor(Math.random() * 151);
   const response = await axios.get(
     `https://pokeapi.co/api/v2/pokemon-species/${randomId}/`
   );
@@ -31,15 +29,15 @@ const getPokemon = async (lobby) => {
 };
 
 io.on("connection", (socket) => {
-  socket.on("create-lobby", (name, id) => {
+  socket.on("create-lobby", (user) => {
     const lobbyId = uuidv4().substring(0, 8);
 
-    const lobby = new Lobby(lobbyId, name);
+    const lobby = new Lobby(lobbyId);
 
     socket.join(lobbyId);
     io.to(lobbyId).emit("receive", lobbyId);
 
-    lobby.addUser(new User(socket.id, "Utente"));
+    lobby.addUser(new User(socket.id, user));
 
     lobbys.push(lobby);
   });
@@ -53,13 +51,13 @@ io.on("connection", (socket) => {
     io.to(roomID).emit("send-players", players);
   });
 
-  socket.on("join", (room) => {
+  socket.on("join", (room, user) => {
     const lobby = getLobbyByCode(room);
     if (!lobby.users.find((user) => user.id === socket.id)) {
       // TODO check if lobby is empty
       socket.join(room);
 
-      lobby.addUser(new User(socket.id, "Utente"));
+      lobby.addUser(new User(socket.id, user));
     }
 
     io.to(room).emit("receive", room);
@@ -97,19 +95,26 @@ io.on("connection", (socket) => {
   });
 
   socket.on("get-game-info", (room) => {
+    console.log(room);
     const lobby = getLobbyByCode(room);
-    if (!lobby.isPlaying) return;
+    // if (!lobby.isPlaying) return;
     sendGameInfo(lobby);
   });
 
-  socket.on("get-guess", async (room, _id, guess) => {
+  socket.on("get-guess", async (room, _id, guess, _user) => {
     const lobby = getLobbyByCode(room);
     console.log(guess);
     if (guess.toLowerCase() === lobby.answer) {
+      lobby.messages.push({ user: _user, message: guess, type: "answer" });
+      io.to(room).emit("send-messages", lobby.messages);
       const user = lobby.users.find(({ id }) => id === _id);
       user.points += 1;
+      lobby.users.sort((a, b) => b.points - a.points);
       await getPokemon(lobby);
       sendGameInfo(lobby);
+    } else {
+      lobby.messages.push({ user: _user, message: guess, type: "wrong" });
+      io.to(room).emit("send-messages", lobby.messages);
     }
   });
 

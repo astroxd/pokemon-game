@@ -2,6 +2,7 @@ import { socket, connect } from "./socket";
 import { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import UserContext from "./UserProvider";
+import Login from "./Login";
 function App() {
   const navigate = useNavigate();
 
@@ -10,13 +11,17 @@ function App() {
   const createLobby = (e) => {
     e.preventDefault();
     if (!id) connect();
-    socket.emit("create-lobby", (e.target[0].value, id));
+    socket.emit("create-lobby", user);
   };
 
   const joinLobby = (e) => {
     e.preventDefault();
     if (!id) connect();
-    socket.emit("join", e.target[0].value);
+
+    const roomCode = e.target[0].value;
+    if (roomCode === "") return;
+
+    socket.emit("join", roomCode, user);
   };
 
   const [id, setid] = useState("");
@@ -28,6 +33,7 @@ function App() {
     });
 
     socket.on("receive", (message) => {
+      console.log("receive", message);
       setRoom(message);
       navigate(`/game?lobby=${message}`);
     });
@@ -36,26 +42,22 @@ function App() {
       socket.off("connect");
       socket.off("receive");
       console.log("disconnet");
-      // socket.disconnect();
     };
   }, []);
 
   return (
     <div className="App">
-      <h1>Join Lobby!</h1>
-      <form onSubmit={(e) => joinLobby(e)}>
-        <input type="text" placeholder="Join Lobby" />
-        <input type="submit" />
-      </form>
-      <h1>Create Lobby!</h1>
-      <form onSubmit={(e) => createLobby(e)}>
-        <input type="text" placeholder="Create Lobby" />
-        <input type="submit" />
-      </form>
-      <div>Connesso: {id}</div>
-      <div>Context: {user}</div>
-      <button onClick={() => setUser("pappa")}>Set User</button>
-      <button onClick={() => navigate("cacca")}>navigate</button>
+      <h1 className="logo">Guess That Pokemon</h1>
+      <div className="form">
+        <Login />
+        <form onSubmit={(e) => joinLobby(e)}>
+          <input type="text" placeholder="Join Lobby" />
+          <input type="submit" value={"Join Lobby"} />
+        </form>
+        <form onSubmit={(e) => createLobby(e)}>
+          <input type="submit" value={"Create Lobby"} />
+        </form>
+      </div>
     </div>
   );
 }

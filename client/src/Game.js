@@ -1,10 +1,13 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useRef, useState } from "react";
 import { socket } from "./socket";
+import UserContext from "./UserProvider";
 
-const Game = ({ room, players }) => {
-  const [gameInfo, setGameInfo] = useState();
+const Game = ({ room, players, changeTimer, gameInfo }) => {
+  // const [gameInfo, setGameInfo] = useState();
   const [guess, setGuess] = useState("");
-  const [timer, setTimer] = useState();
+
+  const { user } = useContext(UserContext);
+  // const [timer, setTimer] = useState();
 
   const [skip, setSkip] = useState(false);
   const [skippers, setSkippers] = useState([0, gameInfo?.points?.length ?? 0]);
@@ -14,14 +17,15 @@ const Game = ({ room, players }) => {
     socket.emit("start-game", room);
   };
 
-  const getGameInfo = useCallback(() => {
-    console.log("get game info");
-    socket.emit("get-game-info", room);
-  }, [room]);
+  // const getGameInfo = () => {
+  //   console.log("get game info");
+  //   socket.emit("get-game-info", room);
+  // };
 
   const checkAnswer = (e) => {
     e.preventDefault();
-    socket.emit("get-guess", room, socket.id, guess);
+    setGuess("");
+    socket.emit("get-guess", room, socket.id, guess, user);
   };
 
   const voteSkip = () => {
@@ -30,21 +34,21 @@ const Game = ({ room, players }) => {
   };
 
   useEffect(() => {
-    socket.on("send-game-info", (gameInfo) => {
-      console.log(gameInfo);
-      setGameInfo(gameInfo);
-      setGuess("");
-    });
+    // socket.on("send-game-info", (gameInfo) => {
+    //   console.log(gameInfo);
+    //   // setGameInfo(gameInfo);
+    //   setGuess("");
+    // });
 
-    getGameInfo();
+    // getGameInfo();
     return () => {
-      socket.off("send-game-info");
+      // socket.off("send-game-info");
     };
-  }, [getGameInfo]);
+  }, []);
 
   useEffect(() => {
     socket.on("send-timer", (_timer) => {
-      setTimer(_timer);
+      changeTimer(_timer);
       console.log(_timer);
     });
 
@@ -54,6 +58,10 @@ const Game = ({ room, players }) => {
 
     socket.on("send-skippers", (skippers, users) => {
       setSkippers([skippers, users]);
+    });
+
+    socket.on("send-messages", (messages) => {
+      setMessages(messages);
     });
 
     return () => {
@@ -67,42 +75,67 @@ const Game = ({ room, players }) => {
     setSkippers((skippers) => [skippers[0] ?? 0, players.length]);
   }, [players]);
 
+  const [messages, setMessages] = useState([]);
+
   return (
-    <div>
-      {gameInfo?.isPlaying ? "true" : "false"}
-      {gameInfo?.hasGameEnded ? (
-        <div>GAME ENDED</div>
-      ) : !gameInfo?.isPlaying ? (
-        <button onClick={startGame}>Start Game</button>
-      ) : (
-        <div>
-          {gameInfo?.src && <img src={gameInfo.src} alt="cacca" width={200} />}
-          <form onSubmit={(e) => checkAnswer(e)}>
-            <input
-              type="text"
-              placeholder="answer"
-              value={guess}
-              onChange={(e) => setGuess(e.target.value)}
-            />
-          </form>
-          Points:{" "}
-          {gameInfo?.points?.map(({ id, points }) => (
-            <div>
-              <span>{id} </span>
-              <span>{points}</span>
-            </div>
+    <>
+      <div className="pokemon flex flex-col p-4 items-center justify-center gap-12 col-span-2">
+        {gameInfo?.hasGameEnded ? (
+          <div>GAME ENDED</div>
+        ) : !gameInfo?.isPlaying ? (
+          <button
+            onClick={startGame}
+            className="px-4 py-2 bg-red-400 rounded hover:rounded-none"
+          >
+            Start Game
+          </button>
+        ) : (
+          <>
+            {skip ? (
+              <span className="self-end px-4 py-2 rounded bg-red-400">
+                Skipping {skippers[0]} \ {skippers[1]}
+              </span>
+            ) : (
+              <button
+                onClick={voteSkip}
+                className="self-end px-4 py-2 rounded bg-red-400 "
+              >{`Skip ${skippers[0]} \\ ${skippers[1]}`}</button>
+            )}
+            {gameInfo?.src && (
+              <div className="grow">
+                <img
+                  src={gameInfo.src}
+                  alt="cacca"
+                  className="h-[450px] max-w-[600px]"
+                />
+              </div>
+            )}
+          </>
+        )}
+      </div>
+      <div className="chat-wrapper bg-red-400 flex flex-col">
+        <div className="overflow-y-scroll p-4">
+          {messages.map(({ user, message, type }) => (
+            <p
+              className={`!${
+                type === "answer" && "bg-rose-800"
+              } even:bg-blue-400`}
+            >
+              {user}: {message}
+            </p>
           ))}
-          Timer: {timer}
-          {skip ? (
-            `Skipping ${skippers[0]} \\ ${skippers[1]}`
-          ) : (
-            <button
-              onClick={voteSkip}
-            >{`Skip ${skippers[0]} \\ ${skippers[1]}`}</button>
-          )}
         </div>
-      )}
-    </div>
+        <form onSubmit={(e) => checkAnswer(e)} className="mt-auto">
+          <input
+            type="text"
+            placeholder="answer"
+            value={guess}
+            onChange={(e) => setGuess(e.target.value)}
+            className="py-2 border-2 rounded outline-0"
+          />
+        </form>
+      </div>
+    </>
   );
 };
 
