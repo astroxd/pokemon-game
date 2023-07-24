@@ -15,17 +15,19 @@ const getPokemon = async (lobby) => {
 
   const randomId = Math.floor(Math.random() * 151);
   const response = await axios.get(
-    `https://pokeapi.co/api/v2/pokemon-species/${randomId}/`
+    `https://pokeapi.co/api/v2/pokemon/${randomId}/`
   );
-  const { name, names } = response.data;
-  const italianName = names.find(
-    ({ language }) => language.name === "it"
-  )?.name;
-  console.log(italianName);
+  const { name, sprites } = response.data;
 
-  const answer = italianName?.toLowerCase() ?? name.toLowerCase();
-  lobby.answer = answer;
-  lobby.src = `https://img.pokemondb.net/artwork/large/${name}.jpg`;
+  // const italianName = names.find(
+  //   ({ language }) => language.name === "it"
+  // )?.name;
+  // console.log(italianName);
+
+  // const answer = italianName?.toLowerCase() ?? name.toLowerCase();
+
+  lobby.answer = name;
+  lobby.src = sprites.other["official-artwork"].front_default;
 };
 
 io.on("connection", (socket) => {

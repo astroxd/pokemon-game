@@ -109,7 +109,7 @@ const Game = ({ room, changeTimer, gameInfo }) => {
                   src={gameInfo.src}
                   alt="cacca"
                   className="h-[450px] max-w-[600px]"
-                  style={{ mixBlendMode: "multiply" }}
+                  style={{ filter: "brightness(0)" }}
                 />
               </div>
             )}
