@@ -2,7 +2,7 @@ import { useCallback, useContext, useEffect, useRef, useState } from "react";
 import { socket } from "./socket";
 import UserContext from "./UserProvider";
 
-const Game = ({ room, players, changeTimer, gameInfo }) => {
+const Game = ({ room, changeTimer, gameInfo }) => {
   // const [gameInfo, setGameInfo] = useState();
   const [guess, setGuess] = useState("");
 
@@ -72,8 +72,8 @@ const Game = ({ room, players, changeTimer, gameInfo }) => {
   }, []);
 
   useEffect(() => {
-    setSkippers((skippers) => [skippers[0] ?? 0, players.length]);
-  }, [players]);
+    setSkippers((skippers) => [skippers[0] ?? 0, gameInfo?.points.length]);
+  }, [gameInfo]);
 
   const [messages, setMessages] = useState([]);
 
@@ -81,7 +81,9 @@ const Game = ({ room, players, changeTimer, gameInfo }) => {
     <>
       <div className="pokemon flex flex-col p-4 items-center justify-center gap-12 col-span-2">
         {gameInfo?.hasGameEnded ? (
-          <div>GAME ENDED</div>
+          <div className="px-4 py-2 rounded bg-red-400">
+            {gameInfo?.points[0]?.name} Wins
+          </div>
         ) : !gameInfo?.isPlaying ? (
           <button
             onClick={startGame}
@@ -107,13 +109,14 @@ const Game = ({ room, players, changeTimer, gameInfo }) => {
                   src={gameInfo.src}
                   alt="cacca"
                   className="h-[450px] max-w-[600px]"
+                  style={{ mixBlendMode: "multiply" }}
                 />
               </div>
             )}
           </>
         )}
       </div>
-      <div className="chat-wrapper bg-red-400 flex flex-col">
+      <div className="chat-wrapper flex flex-col bg-slate-100">
         <div className="overflow-y-scroll p-4">
           {messages.map(({ user, message, type }) => (
             <p
@@ -128,10 +131,10 @@ const Game = ({ room, players, changeTimer, gameInfo }) => {
         <form onSubmit={(e) => checkAnswer(e)} className="mt-auto">
           <input
             type="text"
-            placeholder="answer"
+            placeholder="Answer"
             value={guess}
             onChange={(e) => setGuess(e.target.value)}
-            className="py-2 border-2 rounded outline-0"
+            className="p-2 border-2 rounded outline-0 w-full"
           />
         </form>
       </div>

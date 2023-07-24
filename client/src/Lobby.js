@@ -2,12 +2,11 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { getId, socket } from "./socket";
 import { useLocation } from "react-router-dom";
 import Game from "./Game";
-
+import charizard from "./assets/charizard.png";
 const Lobby = () => {
   const location = useLocation();
   let room = location.search.slice(7, 15);
 
-  const [players, setPlayers] = useState([]);
   const [gameInfo, setGameInfo] = useState();
 
   const [timer, setTimer] = useState(145);
@@ -20,9 +19,7 @@ const Lobby = () => {
   };
 
   useEffect(() => {
-    socket.on("send-players", (players) => {
-      setPlayers(players);
-    });
+    socket.on("send-players", (players) => {});
     socket.on("send-game-info", (gameInfo) => {
       console.log(gameInfo);
       setGameInfo(gameInfo);
@@ -67,6 +64,11 @@ const Lobby = () => {
 
   return (
     <div className="lobby mt-12 mx-12 grid grid-cols-4 gap-4 grid-rows-[auto_100%]">
+      <img
+        src={charizard}
+        alt="charizard"
+        className="absolute left-0 bottom-0 -z-10"
+      />
       {/* <button onClick={getPlayers}>Cacca</button> */}
       <div className="col-span-full bg-blue-400 flex justify-center py-2 px-4 relative">
         <span className="absolute left-4">{timer}</span>
@@ -76,9 +78,9 @@ const Lobby = () => {
         <ul>
           {gameInfo?.points?.map(({ id, name, points }, idx) => {
             return (
-              <li className="flex gap-2 p-4 border-2 border-blue-900 rounded">
+              <li className="flex gap-2 p-4 border-2 border-blue-900 rounded bg-slate-100">
                 <div className="flex-none">#{idx + 1}</div>
-                <div className="grow text-center bg-blue-400">{name}</div>
+                <div className="grow text-center">{name}</div>
                 <div className="flex-none">{points}</div>
               </li>
             );
@@ -86,12 +88,7 @@ const Lobby = () => {
         </ul>
       </div>
 
-      <Game
-        room={room}
-        players={players}
-        changeTimer={changeTimer}
-        gameInfo={gameInfo}
-      />
+      <Game room={room} changeTimer={changeTimer} gameInfo={gameInfo} />
     </div>
   );
 };

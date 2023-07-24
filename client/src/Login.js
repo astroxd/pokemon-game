@@ -16,7 +16,10 @@ const Login = () => {
     // navigate(location.state?.next || "/", { replace: true });
   };
   return (
-    <div className="login">
+    <div>
+      <h2 className="text-2xl font-bold mb-2 text-[#F9C934] drop-shadow">
+        Login
+      </h2>
       <form onSubmit={(e) => login(e)}>
         <input
           type="text"
@@ -25,7 +28,8 @@ const Login = () => {
             setUser(e.target.value);
           }}
           value={userName}
-          placeholder="Login"
+          placeholder="Your Username"
+          className="w-full p-2 rounded"
         />
       </form>
     </div>

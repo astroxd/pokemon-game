@@ -7,7 +7,7 @@ class Lobby {
 
   src = "";
   answer = "";
-  timer = 400;
+  timer = 15;
 
   skipping = 0;
 
